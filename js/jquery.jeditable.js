@@ -65,6 +65,12 @@
   *             
   */
 
+/* Allow the element to be make uneditable again. */
+jQuery.fn.uneditable = function() {
+    var data = this.data();
+    this.unbind(data.editevent, data.handler);
+}
+
 jQuery.fn.editable = function(target, options, callback) {
 
     /* prevent elem has no properties error */
@@ -81,6 +87,7 @@ jQuery.fn.editable = function(target, options, callback) {
         height     : 'auto',
         event      : 'click',
         onblur     : 'cancel',
+        onblur_cb  : function () {},
         loadtype   : 'GET',
         loadtext   : 'Loading...',
         loaddata   : {},
@@ -109,7 +116,7 @@ jQuery.fn.editable = function(target, options, callback) {
     settings.autowidth  = 'auto' == settings.width;
     settings.autoheight = 'auto' == settings.height;
                 
-    jQuery(this)[settings.event](function(e) {
+    var handler = (function(e) {
 
         /* save this to self because this changes when scope changes */
         var self = this;
@@ -131,7 +138,7 @@ jQuery.fn.editable = function(target, options, callback) {
                 
         self.editing    = true;
         self.revert     = jQuery(self).html();
-        self.innerHTML  = '';
+        $(self).html('');
 
         /* create the form object */
         var f = document.createElement('form');
@@ -225,12 +232,14 @@ jQuery.fn.editable = function(target, options, callback) {
             if (e.keyCode == 27) {
                 e.preventDefault();
                 reset();
+                settings.onblur_cb.call(self, e);
             }
         });
 
         /* discard, submit or nothing with changes when clicking outside */
         /* do nothing is usable when navigating with tab */
         var t;
+        jQuery(i).blur(settings.onblur_cb);
         if ('cancel' == settings.onblur) {
             jQuery(i).blur(function(e) {
                 t = setTimeout(reset, 500);
@@ -260,9 +269,9 @@ jQuery.fn.editable = function(target, options, callback) {
             /* check if given target is function */
             if (jQuery.isFunction(settings.target)) {
                 var str = settings.target.apply(self, [jQuery(i).val(), settings]);
-                self.innerHTML = str;
+                $(self).html(str);
                 self.editing = false;
-                callback.apply(self, [self.innerHTML, settings]);
+                callback.apply(self, [str, settings]);
             } else {
                 /* add edited content and id of edited element to POST */
                 var submitdata = {};
@@ -288,11 +297,18 @@ jQuery.fn.editable = function(target, options, callback) {
         });
 
         function reset() {
-            self.innerHTML = self.revert;
+            $(self).html(self.revert);
             self.editing   = false;
         }
 
     });
+
+    // save this stuff so that we can make it uneditable if need be
+    jQuery(this).data({
+        handler: handler,
+        editevent: settings.event
+    });
+    jQuery(this)[settings.event](handler);
     
     return(this);
 };
