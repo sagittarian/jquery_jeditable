@@ -260,12 +260,14 @@
                     if (e.keyCode == 27) {
                         e.preventDefault();
                         reset.apply(form, [settings, self]);
+                        settings.onblur_cb.call(self, e);
                     }
                 });
 
                 /* Discard, submit or nothing with changes when clicking outside. */
                 /* Do nothing is usable when navigating with tab. */
                 var t;
+                input.blur(settings.onblur_cb);
                 if ('cancel' == settings.onblur) {
                     input.blur(function(e) {
                         /* Prevent canceling if submit was clicked. */
@@ -311,7 +313,7 @@
                               var str = settings.target.apply(self, [input.val(), settings]);
                               $(self).html(str);
                               self.editing = false;
-                              callback.apply(self, [self.innerHTML, settings]);
+                              callback.apply(self, [$(self).html(), settings]);
                               /* TODO: this is not dry */                              
                               if (!$.trim($(self).html())) {
                                   $(self).html(settings.placeholder);
@@ -535,6 +537,7 @@
         height     : 'auto',
         event      : 'click.editable',
         onblur     : 'cancel',
+        onblur_cb  : function () {},
         loadtype   : 'GET',
         loadtext   : 'Loading...',
         placeholder: 'Click to edit',
