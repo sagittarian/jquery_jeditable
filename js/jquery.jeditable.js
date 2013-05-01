@@ -242,7 +242,7 @@ jQuery.fn.editable = function(target, options, callback) {
         jQuery(i).blur(settings.onblur_cb);
         if ('cancel' == settings.onblur) {
             jQuery(i).blur(function(e) {
-                t = setTimeout(reset, 500);
+                reset();
             });
         } else if ('submit' == settings.onblur) {
             jQuery(i).blur(function(e) {
